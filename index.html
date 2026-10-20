@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Órbita — Comunidade, Chat & Voz em Tempo Real</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<section id="auth-view" class="auth-view">
+  <div class="intro"><a class="wordmark" href="/">◉ ÓRBITA<span>BETA</span></a><div><p class="eyebrow">PERTO, DE QUALQUER LUGAR</p><h1>As melhores ideias<br>começam com<br><em>uma conversa.</em></h1><p class="intro-copy">Seu espaço para conversar, criar e estar junto.<br>Texto, voz e vídeo. Tudo na mesma órbita.</p><div class="orbit-art" aria-hidden="true"><div class="planet">◉</div><span class="sat s1">voz</span><span class="sat s2">ideias</span><span class="sat s3">conexões</span></div></div><small>Um espaço compartilhado. Infinitas conversas.</small></div>
+  <div class="auth-card"><p class="eyebrow">BEM-VINDO À SUA COMUNIDADE</p><h2 id="auth-title">Bom ter você aqui.</h2><p id="auth-description" class="muted">Entre para encontrar a sua galera.</p>
+  <div id="setup" class="notice" hidden>O site está pronto para configurar. Preencha o arquivo <code>.env</code> e execute <code>supabase.sql</code> no Supabase. Consulte o README da pasta.</div>
+  <form id="auth-form"><label id="name-label" hidden>Como devemos chamar você?<input id="display-name" maxlength="50" autocomplete="nickname" placeholder="Seu nome"></label><label>E-mail<input id="email" type="email" autocomplete="email" required placeholder="voce@exemplo.com"></label><label>Senha<input id="password" type="password" minlength="8" autocomplete="current-password" required placeholder="Pelo menos 8 caracteres"></label><button id="auth-submit" class="primary" type="submit">Entrar na Órbita <span>↗</span></button></form>
+  <p id="auth-status" role="status" class="muted"></p><button id="toggle-auth" class="text-button">Ainda não tem conta? Cadastre-se</button><p class="fine">Microfone e câmera só são ativados com a sua permissão.</p></div>
+</section>
+
+<div class="app" id="app-view" hidden>
+
+  <!-- ============================================================
+       SERVER RAIL
+  ============================================================ -->
+  <nav class="rail" id="server-rail">
+    <button class="server-icon home" id="friends-nav" title="Início — Mensagens Diretas e Amigos">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="3" fill="currentColor"/>
+        <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-30 12 12)"/>
+        <circle cx="19" cy="7.5" r="1.5" fill="currentColor"/>
+      </svg>
+    </button>
+
+    <div class="rail-divider"></div>
+
+    <div id="rail-servers-list" style="display:flex;flex-direction:column;gap:8px;align-items:center;"></div>
+
+    <div class="rail-divider"></div>
+
+    <button class="server-icon action-rail" id="btn-add-server" title="Adicionar servidor">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    </button>
+    <button class="server-icon action-rail" id="btn-explore-servers" title="Explorar comunidades">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor"/>
+      </svg>
+    </button>
+  </nav>
+
+  <!-- ============================================================
+       SIDEBAR
+  ============================================================ -->
+  <aside class="sidebar">
+    <header class="server-header" id="server-header-btn">
+      <h1>
+        <svg class="logo-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="3" fill="currentColor"/>
+          <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(-30 12 12)"/>
+          <circle cx="19" cy="7.5" r="1.5" fill="currentColor"/>
+        </svg>
+        <span id="sidebar-server-title">Órbita</span>
+        <span class="boost-pill" id="sidebar-boost-pill">COMUNIDADE</span>
+      </h1>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </header>
+
+    <!-- Server Dropdown Menu -->
+    <div class="server-dropdown hidden" id="server-dropdown">
+      <button class="boost-item" id="dd-boost-btn">
+        <span>Google Drive Servidor</span>
+        <span>✦</span>
+      </button>
+      <div class="dd-sep"></div>
+      <button id="dd-invite-btn">
+        <span>Convidar Pessoas</span>
+        <span>+</span>
+      </button>
+      <button id="dd-create-channel-btn">
+        <span>Criar Canal</span>
+        <span>#</span>
+      </button>
+      <button id="dd-settings-btn">
+        <span>Aparência & Configurações</span>
+        <span>⚙</span>
+      </button>
+    </div>
+
+    <!-- Server Boost Banner -->
+    <div class="server-banner" id="server-banner-box">
+      <div class="sb-info">
+        <strong id="banner-title">Arquivos e conexões</strong>
+        <span>Voz, vídeo e arquivos no mesmo lugar</span>
+      </div>
+      <button class="sb-btn" id="banner-action-btn">Google Drive</button>
+    </div>
+
+    <div class="channels-scroll" id="sidebar-scroll-content"><div class="category"><div class="category-header"><span>CANAIS DE TEXTO</span><button id="create-channel" title="Criar canal">＋</button></div><div id="text-channels" class="channel-list"></div></div><div class="category"><div class="category-header"><span>SALAS DE VOZ</span></div><div id="voice-channels" class="channel-list"></div></div></div><div class="channels-scroll hidden" id="dm-scroll-content">
+      <button class="dm-search-btn" id="dm-quick-find">
+        <span>Encontrar ou começar conversa</span>
+        <kbd style="font-size:10px;background:var(--bg-elevated);padding:2px 5px;border-radius:4px;">Ctrl+K</kbd>
+      </button>
+      <div class="dm-item active" id="friends-shortcut">
+        <div class="dm-av" style="background:var(--accent)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div style="font-weight:700;font-size:14px;">Amigos</div>
+      </div>
+      <div style="padding:12px 16px 4px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-mut);letter-spacing:.05em;">
+        Mensagens Diretas
+      </div>
+      <div id="dm-channels"></div>
+    </div>
+
+    <!-- Voice connected bar -->
+    <div class="voice-bar" id="call-dock" hidden>
+      <div class="vb-top">
+        <div class="vb-status">
+          <span class="dot"></span>
+          Voz conectada
+        </div>
+        <span class="vb-ping">18 ms • RTC</span>
+      </div>
+      <div class="vb-name" id="dock-name" title="Clique para voltar ao palco de voz">Sala Principal / Órbita</div>
+      <div class="vb-actions">
+        <button class="vb-btn" id="vb-mic" title="Silenciar microfone">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <rect x="9" y="2" width="6" height="12" rx="3"/>
+            <path d="M5 10v2a7 7 0 0 0 14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
+          </svg>
+        </button>
+        <button class="vb-btn" id="vb-video" title="Ativar câmera">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="23 7 16 12 23 17 23 7"/>
+            <rect x="1" y="5" width="15" height="14" rx="2"/>
+          </svg>
+        </button>
+        <button class="vb-btn danger" id="dock-leave" title="Desconectar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/>
+            <line x1="23" y1="1" x2="1" y2="23"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- User panel -->
+    <div class="user-panel">
+      <button class="up-profile-trigger" id="up-profile-btn" title="Alterar status e perfil">
+        <div class="up-avatar"><span id="user-avatar">O</span><span class="status-dot" id="self-status-dot"></span>
+        </div>
+        <div class="up-info">
+          <div class="up-name" id="user-name">Sua conta</div>
+          <div class="up-status" id="self-status-text">Disponível</div>
+        </div>
+      </button>
+      <div class="up-controls"><button id="logout" title="Sair da conta">↪</button>
+        <button class="up-btn" id="up-mic-btn" title="Microfone">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <rect x="9" y="2" width="6" height="12" rx="3"/>
+            <path d="M5 10v2a7 7 0 0 0 14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
+          </svg>
+        </button>
+        <button class="up-btn" id="up-deafen-btn" title="Fones">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+            <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+          </svg>
+        </button>
+        <button class="up-btn" id="settings" title="Configurações">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Status Popover -->
+      <div class="status-popover hidden" id="status-popover">
+        <div class="sp-title">Definir Status</div>
+        <button class="sp-opt" data-status="online" data-label="Disponível">
+          <span class="sp-dot" style="background:var(--online)"></span> Disponível
+        </button>
+        <button class="sp-opt" data-status="idle" data-label="Ausente">
+          <span class="sp-dot" style="background:var(--idle)"></span> Ausente
+        </button>
+        <button class="sp-opt" data-status="dnd" data-label="Não Perturbe">
+          <span class="sp-dot" style="background:var(--dnd)"></span> Não Perturbe
+        </button>
+        <button class="sp-opt" data-status="offline" data-label="Invisível">
+          <span class="sp-dot" style="background:var(--offline)"></span> Invisível
+        </button>
+        <div class="sp-custom">
+          <input type="text" id="custom-status-input" placeholder="Status personalizado...">
+          <button id="save-custom-status-btn">OK</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============================================================
+       MAIN AREA
+  ============================================================ -->
+  <main class="main">
+
+    <!-- CHAT VIEW -->
+    <div class="voice-view" id="text-view" style="background: transparent;">
+      <header class="chat-header">
+        <div class="chat-title">
+          <button class="mobile-nav-btn" id="mobile-menu-btn" title="Menu de Canais">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <svg class="ch-icon" id="header-ch-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="4" y1="9" x2="20" y2="9"/>
+            <line x1="4" y1="15" x2="20" y2="15"/>
+            <line x1="10" y1="3" x2="8" y2="21"/>
+            <line x1="16" y1="3" x2="14" y2="21"/>
+          </svg>
+          <h2 id="channel-title">geral</h2>
+          <span class="ch-desc" id="channel-description">Conversa livre do servidor</span>
+        </div>
+        <div class="chat-actions">
+          <button id="btn-notif-toggle" title="Notificações">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </button>
+          <button id="pins-toggle" title="Fixadas">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="17" x2="12" y2="22"/>
+              <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24z"/>
+            </svg>
+            <span class="pin-dot" id="header-pin-dot"></span>
+          </button>
+          <button id="btn-members-toggle" class="active" title="Membros">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </button>
+          <div class="header-search-wrap">
+            <input type="text" class="header-search-input" id="search-messages" aria-label="Buscar mensagens" placeholder="Buscar no canal...">
+            <button id="btn-search-toggle" title="Buscar" style="position:absolute;right:0;width:28px;height:28px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Pinned Messages Popover -->
+        <div class="header-popover hidden" id="pins-popover">
+          <div class="hp-head">
+            <span>📌 Mensagens Fixadas</span>
+            <button id="close-pins-btn" style="font-size:12px;color:var(--text-mut)">Fechar</button>
+          </div>
+          <div class="hp-body" id="pins-list-body"></div>
+        </div>
+      </header>
+
+      <div class="messages" id="message-list">
+        <div class="date-divider">Hoje</div>
+      </div>
+
+      <div class="typing-indicator" id="typing-bar" hidden>
+        <span class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+        <span id="typing-text"></span>
+      </div>
+
+      <!-- Reply Banner -->
+      <div class="reply-banner hidden" id="reply-banner">
+        <span>Respondendo a <strong id="reply-target-name">@Luna</strong></span>
+        <button type="button" id="cancel-reply-btn">✕ Cancelar</button>
+      </div>
+
+      <div class="message-form-wrap">
+        <!-- Attach Popover -->
+        <div class="composer-popover attach-popover hidden" id="attach-popover">
+          <button type="button" id="attach-file">📎 Enviar arquivo pelo Drive</button>
+          <button type="button" id="insert-code">⌨ Inserir trecho de código</button>
+          <button type="button" id="create-poll">📊 Criar Enquete Rápida</button>
+        </div>
+
+        <!-- Emoji Popover -->
+        <div class="composer-popover emoji-popover hidden" id="emoji-popover">
+          <div class="ep-title">Emojis Rápidos</div>
+          <div class="emoji-grid" id="emoji-grid"></div>
+        </div>
+
+        <form class="message-form" id="message-form">
+          <button type="button" class="add-btn" id="btn-attach" title="Anexar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+          <input type="text" maxlength="4000" id="message-input" aria-label="Mensagem" placeholder="Conversar em #geral (use `código` ou @nome)" autocomplete="off">
+          <button type="button" class="icon-btn" id="btn-emoji" title="Emoji">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+              <line x1="9" y1="9" x2="9.01" y2="9"/>
+              <line x1="15" y1="9" x2="15.01" y2="9"/>
+            </svg>
+          </button>
+          <button type="button" class="icon-btn" id="music-toggle" title="Ouvir juntos">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 12 20 22 4 22 4 12"/>
+              <rect x="2" y="7" width="20" height="5"/>
+              <line x1="12" y1="22" x2="12" y2="7"/>
+              <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+              <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+            </svg>
+          </button>
+        <button type="submit" id="send" class="send-live" aria-label="Enviar mensagem">➤</button></form>
+      </div>
+    </div>
+
+    <!-- FRIENDS HUB VIEW (HOME) -->
+    <div class="friends-view" id="friends-view" hidden>
+      <header class="chat-header">
+        <div class="chat-title">
+          <svg class="ch-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+          </svg>
+          <h2>Amigos</h2>
+          <div class="friends-tabs">
+            <button class="friends-tab active" data-ftab="online">Online</button>
+            <button class="friends-tab" data-ftab="all">Todos</button>
+            <button class="friends-tab add-friend" id="btn-open-add-friend">Adicionar Amigo</button>
+          </div>
+        </div>
+      </header>
+      <div class="friends-list-wrap"><form id="add-friend-form" class="add-friend-form"><input id="friend-username" placeholder="Nome de usuário do amigo" required maxlength="24"><button class="primary" type="submit">Enviar pedido</button></form><p id="friend-total"></p><div id="friends-list"></div></div>
+    </div>
+
+    <!-- VOICE VIEW -->
+    <div class="voice-view" id="voice-view" hidden>
+      <header class="chat-header">
+        <div class="chat-title">
+          <svg class="ch-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          </svg>
+          <h2 id="voice-title">Sala Principal</h2>
+          <span class="ch-desc" id="call-status">Entre na sala para conversar</span>
+        </div>
+        <div class="chat-actions">
+          <button id="back-to-call" title="Voltar ao chat de texto mantendo a call">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="voice-stage" id="voice-stage">
+        <div id="main-stage" class="main-stage"></div>
+        <div id="filmstrip" class="filmstrip">
+          <div id="participants" class="participants"></div>
+          <div id="media-grid" class="media-grid"></div>
+        </div>
+        <div id="empty-call" class="empty-call"><h2>Entre na conversa.</h2><p>Voz, câmera e compartilhamento de tela com áudio.</p></div>
+      </div>
+      <button id="layout-toggle" class="layout-toggle" hidden title="Alternar layout da chamada">Stage / Gallery</button>
+      <div class="call-extras" id="call-extras" hidden>
+        <label class="quality-select">Qualidade da tela
+          <select id="screen-quality">
+            <option value="720p15">720p 15fps (leve)</option>
+            <option value="1080p15">1080p 15fps</option>
+            <option value="1080p30" selected>1080p 30fps</option>
+            <option value="1440p15">1440p 15fps (alta)</option>
+          </select>
+        </label>
+        <button id="noise-toggle" class="tiny-button" title="Noise Suppression">🔇 Noise</button>
+      </div><div class="join-wrap"><button id="join-call" class="primary">Entrar na sala</button></div>
+
+      <div class="shortcuts-hint" id="shortcuts-hint" hidden>Atalhos: M mute · V câmera · Shift+S tela · D surdo</div>
+      <div class="voice-controls" id="active-controls" hidden><button id="deafen" class="vc-btn" aria-pressed="false" title="Silenciar áudio">🎧</button>
+        <button class="vc-btn" id="mic" title="Microfone">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <rect x="9" y="2" width="6" height="12" rx="3"/>
+            <path d="M5 10v2a7 7 0 0 0 14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
+          </svg>
+        </button>
+        <button class="vc-btn" id="camera" title="Câmera">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="23 7 16 12 23 17 23 7"/>
+            <rect x="1" y="5" width="15" height="14" rx="2"/>
+          </svg>
+        </button>
+        <button class="vc-btn" id="screen" title="Compartilhar tela">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        </button>
+        <button class="vc-btn" id="connection-info" title="Qualidade da conexão">
+          📶
+        </button>
+        <button class="vc-btn" id="vc-react-call" title="Enviar Reação na Call">
+          🎉
+        </button>
+        <button class="vc-btn danger" id="leave-call" title="Desconectar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/>
+            <line x1="23" y1="1" x2="1" y2="23"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ============================================================
+       MEMBERS SIDEBAR
+  ============================================================ -->
+  <aside class="members" id="members-sidebar"><div class="member-heading">MEMBROS <span id="member-count"></span><span id="online-count"></span></div><div id="member-list"></div><section class="music-panel" id="music-panel"><h3>♫ Ouvir juntos</h3><p id="music-status">Escolha uma música</p><input id="music-seek" type="range" min="0" max="100" value="0" aria-label="Posição da música"><div class="music-buttons"><button id="music-play" aria-label="Reproduzir ou pausar">▶</button><button id="music-listen">Ouvir</button><button id="music-upload" aria-label="Escolher música">＋</button></div><label>Volume <input id="music-volume" type="range" min="0" max="1" step="0.05" value="1"></label><input id="music-input" type="file" accept="audio/*" hidden></section></aside>
+
+</div>
+
+<!-- USER PROFILE CARD POPOVER -->
+<div class="profile-card-popover hidden" id="profile-popover"></div>
+
+<!-- UNIVERSAL MODAL -->
+<div class="modal-backdrop hidden" id="modal-backdrop">
+  <div class="modal-box" id="modal-box"></div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+
+<p id="creators-credit" class="creators-credit"></p><div id="toast" role="status" hidden></div>
+<input type="file" id="file-input" hidden>
+<button id="private-call" class="private-call primary" hidden>Ligar em particular ↗</button>
+<button id="drive-info" class="drive-shortcut" title="Google Drive">▱</button>
+<span id="friends-badge" hidden></span>
+<button id="back-to-call-dock" hidden>Voltar à chamada</button>
+<div id="incoming-call" class="incoming-call" hidden><strong id="incoming-name"></strong><button id="answer-call" class="primary">Atender</button><button id="decline-call" class="danger">Recusar</button></div>
+<dialog id="app-dialog"><div class="dialog-header"><h2 id="dialog-title"></h2><button id="dialog-close" aria-label="Fechar">×</button></div><div id="dialog-content"></div></dialog>
+<script type="module" src="/static/app.js"></script></body></html>
